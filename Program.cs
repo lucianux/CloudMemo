@@ -25,6 +25,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Root endpoint
+    app.MapGet("/", () => "Cloud Memo API up");
+
 // 2. Endpoint para LEER el string
 app.MapGet("/leer", (IConfiguration config) => 
 {

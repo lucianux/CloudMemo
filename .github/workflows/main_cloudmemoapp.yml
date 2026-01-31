@@ -62,4 +62,4 @@ jobs:
           app-name: 'CloudMemoApp'
           slot-name: 'Production'
           package: .
-          
+          startup-command: 'dotnet CloudMemo.dll'
