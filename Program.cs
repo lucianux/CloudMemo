@@ -6,17 +6,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 1. Conectamos la App con el servicio de Azure para LEER
+// We connect the app to the Azure service to READ
 string connectionString = builder.Configuration.GetConnectionString("AzureAppConfig");
 
 builder.Configuration.AddAzureAppConfiguration(options =>
 {
     options.Connect(connectionString)
-	   // Esto hace que si cambias el valor en el portal, la app se entere
-	   .ConfigureRefresh(refresh => refresh.Register("MensajePersistente", refreshAll: true));
+       // This means that if you change the value on the Portal, the app will know.
+       .ConfigureRefresh(refresh => refresh.Register("MensajePersistente", refreshAll: true)
+          //.SetCacheExpiration(TimeSpan.FromSeconds(5));
+          .SetRefreshInterval(TimeSpan.FromSeconds(5)));
 });
 
+builder.Services.AddAzureAppConfiguration();
+
 var app = builder.Build();
+
+app.UseAzureAppConfiguration();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -28,19 +34,19 @@ if (app.Environment.IsDevelopment())
 // Root endpoint
     app.MapGet("/", () => "Cloud Memo API up");
 
-// 2. Endpoint para LEER el string
+// Endpoint to READ the string
 app.MapGet("/leer", (IConfiguration config) => 
 {
     var valor = config["MensajePersistente"] ?? "No encontrado";
     return Results.Ok(new { mensaje = valor });
 });
 
-// 3. Endpoint para GUARDAR (Actualizar) el string
+// Endpoint to SAVE (Update) the string
 app.MapPost("/guardar", async (string nuevoTexto) => 
 {
     var client = new ConfigurationClient(connectionString);
     
-    // Actualizamos el valor en Azure
+    // We updated the value in Azure.
     await client.SetConfigurationSettingAsync("MensajePersistente", nuevoTexto);
     
     return Results.Ok("Valor actualizado en Azure App Configuration.");
